@@ -717,12 +717,19 @@ const server = http.createServer((req, res) => {
         const targets = Array.isArray(deviceIds) ? deviceIds : group.deviceIds;
         await Promise.all(targets.map(deviceId => {
           const targetCode = codeMap[deviceId] || 'bright_value';
-          return tuyaApiRequest(`/v1.0/iot-03/devices/${deviceId}/commands`, 'POST', {
-            commands: [
-              { code: 'work_mode', value: 'white' },
-              { code: targetCode, value: parseInt(value) }
-            ]
-          });
+          const commands = [];
+          
+          // Enforce the group's target power state when sending brightness commands.
+          // This prevents a device from staying ON (or automatically turning itself ON) 
+          // when the group is supposed to be OFF.
+          if (group.targetPower != null) {
+            commands.push({ code: 'switch_led', value: group.targetPower });
+          }
+          
+          commands.push({ code: 'work_mode', value: 'white' });
+          commands.push({ code: targetCode, value: parseInt(value) });
+
+          return tuyaApiRequest(`/v1.0/iot-03/devices/${deviceId}/commands`, 'POST', { commands });
         }));
         // A user-initiated set (not a drift correction) becomes the group's
         // sticky target — the slider always displays this going forward,
