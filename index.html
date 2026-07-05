@@ -82,6 +82,17 @@
     let groupsData = [];
     let currentShopFilter = 'all';
 
+    // Prevents user-supplied text (shop/group names) from being interpreted
+    // as HTML when injected into innerHTML (XSS guard).
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     async function loadAll() {
         try {
             // Fetch devices
@@ -199,12 +210,11 @@
         let html = `<div class="shop-chip ${currentShopFilter === 'all' ? 'active' : ''}"><span class="chip-label" onclick="setShopFilter('all')">All shops</span></div>`;
         html += `<div class="shop-chip ${currentShopFilter === 'unassigned' ? 'active' : ''}"><span class="chip-label" onclick="setShopFilter('unassigned')">Unassigned</span></div>`;
         shopsData.forEach(shop => {
-            const safeName = shop.name.replace(/'/g, "\\'");
             html += `
                 <div class="shop-chip ${currentShopFilter === shop.shopId ? 'active' : ''}">
-                    <span class="chip-label" onclick="setShopFilter('${shop.shopId}')">${shop.name}</span>
+                    <span class="chip-label" onclick="setShopFilter('${shop.shopId}')">${escHtml(shop.name)}</span>
                     <span class="chip-actions">
-                        <span onclick="renameShop('${shop.shopId}', '${safeName}')" title="Rename">&#9998;</span>
+                        <span onclick="renameShop('${shop.shopId}', ${JSON.stringify(shop.name)})" title="Rename">&#9998;</span>
                         <span onclick="deleteShop('${shop.shopId}')" title="Delete">&#10005;</span>
                     </span>
                 </div>`;
@@ -343,8 +353,8 @@
             return `
                 <div class="card group-card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong>${group.name}</strong>
-                        <span class="shop-tag">${shop ? shop.name : ''}</span>
+                        <strong>${escHtml(group.name)}</strong>
+                        <span class="shop-tag">${shop ? escHtml(shop.name) : ''}</span>
                     </div>
                     <div style="font-size:11px; color:#aaa; margin:6px 0;">
                         Status:
@@ -437,7 +447,7 @@
         document.getElementById('groupFormName').value = '';
         const shopSelect = document.getElementById('groupFormShop');
         shopSelect.disabled = false;
-        shopSelect.innerHTML = shopsData.map(s => `<option value="${s.shopId}">${s.name}</option>`).join('');
+        shopSelect.innerHTML = shopsData.map(s => `<option value="${s.shopId}">${escHtml(s.name)}</option>`).join('');
         if (shopsData.length === 0) {
             alert('Create a shop first — groups need to belong to one.');
             return;
@@ -456,7 +466,7 @@
         document.getElementById('groupFormId').value = group.groupId;
         document.getElementById('groupFormName').value = group.name;
         const shopSelect = document.getElementById('groupFormShop');
-        shopSelect.innerHTML = shopsData.map(s => `<option value="${s.shopId}">${s.name}</option>`).join('');
+        shopSelect.innerHTML = shopsData.map(s => `<option value="${s.shopId}">${escHtml(s.name)}</option>`).join('');
         shopSelect.value = group.shopId;
         shopSelect.disabled = true; // a group's shop is fixed after creation
         renderGroupFormDeviceList(group.deviceIds);
@@ -575,7 +585,7 @@
                 ? `<div class="schedule-box">
                        <strong>Daily Schedule Automation</strong>
                        <div style="font-size:12px; color:#888; margin-top:8px;">
-                           Managed by group <strong>${memberGroup.name}</strong>'s schedule. Remove this device from the group to set its own.
+                           Managed by group <strong>${escHtml(memberGroup.name)}</strong>'s schedule. Remove this device from the group to set its own.
                        </div>
                    </div>`
                 : `<div class="schedule-box">

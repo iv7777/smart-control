@@ -37,6 +37,7 @@ const STORAGE_FILE = path.join(__dirname, 'schedules.json');
 const ORG_FILE = path.join(__dirname, 'orgData.json');
 
 let cachedToken = '';
+let tokenRefreshPromise = null;  // shared in-flight promise — see getAccessToken()
 const activeJobs = {}; 
 
 // --- ORG DATA HELPERS (shops + groups) ---
@@ -187,13 +188,17 @@ function calculateSign(clientId, secret, timestamp, stringToSign, accessToken = 
 
 // --- HELPER: Fetch Token ---
 async function getAccessToken() {
-  const timestamp = Date.now().toString();
-  const urlPath = '/v1.0/token?grant_type=1';
-  const contentHash = crypto.createHash('sha256').update('').digest('hex');
-  const stringToSign = `GET\n${contentHash}\n\n${urlPath}`;
-  const sign = calculateSign(CLIENT_ID, SECRET, timestamp, stringToSign);
+  // Deduplicate concurrent token-refresh calls: all callers awaiting a new
+  // token share the same single in-flight request instead of each firing
+  // their own to the Tuya endpoint.
+  if (tokenRefreshPromise) return tokenRefreshPromise;
+  tokenRefreshPromise = (async () => {
+    const timestamp = Date.now().toString();
+    const urlPath = '/v1.0/token?grant_type=1';
+    const contentHash = crypto.createHash('sha256').update('').digest('hex');
+    const stringToSign = `GET\n${contentHash}\n\n${urlPath}`;
+    const sign = calculateSign(CLIENT_ID, SECRET, timestamp, stringToSign);
 
-  try {
     const response = await axios.get(`${BASE_URL}${urlPath}`, {
       headers: { 'client_id': CLIENT_ID, 'sign': sign, 't': timestamp, 'sign_method': 'HMAC-SHA256' }
     });
@@ -202,14 +207,17 @@ async function getAccessToken() {
       return cachedToken;
     }
     throw new Error(response.data.msg);
-  } catch (error) {
+  })().catch(error => {
     console.error('Token error:', error.message);
     throw error;
-  }
+  }).finally(() => {
+    tokenRefreshPromise = null;
+  });
+  return tokenRefreshPromise;
 }
 
 // --- HELPER: Send Generic API Requests ---
-async function tuyaApiRequest(path, method, body = null) {
+async function tuyaApiRequest(path, method, body = null, retried = false) {
   const token = cachedToken || await getAccessToken();
   const timestamp = Date.now().toString();
   const bodyStr = body ? JSON.stringify(body) : '';
@@ -232,9 +240,10 @@ async function tuyaApiRequest(path, method, body = null) {
     if (body) config.data = body;
     const response = await axios(config);
     
-    if (response.data.code === 1010) { 
+    // Guard against infinite retry: refresh the token only once per call.
+    if (response.data.code === 1010 && !retried) { 
       await getAccessToken();
-      return tuyaApiRequest(path, method, body);
+      return tuyaApiRequest(path, method, body, true);
     }
     return response.data;
   } catch (error) {
