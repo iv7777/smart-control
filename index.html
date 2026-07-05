@@ -11,6 +11,7 @@
         .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; position: absolute; top: 25px; right: 25px; }
         .online { background: #28a745; } .offline { background: #dc3545; }
         button { color: white; border: none; padding: 8px 16px; font-size: 13px; border-radius: 4px; cursor: pointer; margin: 2px; }
+        button:disabled, input:disabled, select:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-on { background: #007bff; } .btn-off { background: #6c757d; }
         .schedule-box { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; font-size: 13px; }
         .schedule-box input { padding: 4px; font-size: 12px; margin-right: 5px; }
@@ -643,14 +644,14 @@
                 </div>
                 
                 <div>
-                    <button class="btn-on" onclick="togglePower('${dev.id}', true)">ON</button>
-                    <button class="btn-off" onclick="togglePower('${dev.id}', false)">OFF</button>
+                    <button class="btn-on" onclick="togglePower('${dev.id}', true)" ${memberGroupId ? 'disabled title="Managed by group"' : ''}>ON</button>
+                    <button class="btn-off" onclick="togglePower('${dev.id}', false)" ${memberGroupId ? 'disabled title="Managed by group"' : ''}>OFF</button>
                 </div>
                 <div style="margin-top:10px;">
                     <label style="font-size:12px;" id="dimmer_val_${dev.id}">Dimmer (${currentBright})</label>
                     <input type="range" min="10" max="1000" value="${currentBright}" 
                            oninput="document.getElementById('dimmer_val_${dev.id}').innerText = 'Dimmer (' + this.value + ')'" 
-                           onchange="changeBrightness('${dev.id}', this.value, '${brightCode}')" style="width:100%;">
+                           onchange="changeBrightness('${dev.id}', this.value, '${brightCode}')" style="width:100%;" ${memberGroupId ? 'disabled title="Managed by group"' : ''}>
                 </div>
 
                 ${scheduleBoxHtml}
