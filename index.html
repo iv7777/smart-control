@@ -13,9 +13,9 @@
         button { color: white; border: none; padding: 8px 16px; font-size: 13px; border-radius: 4px; cursor: pointer; margin: 2px; }
         button:disabled, input:disabled, select:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-on { background: #007bff; } .btn-off { background: #6c757d; }
-        .schedule-box { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; font-size: 13px; }
-        .schedule-box input { padding: 4px; font-size: 12px; margin-right: 5px; }
-        .schedule-box button { background: #28a745; padding: 5px 10px; font-size: 11px; }
+        .timer-box { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; font-size: 13px; }
+        .timer-box input { padding: 4px; font-size: 12px; margin-right: 5px; }
+        .timer-box button { background: #28a745; padding: 5px 10px; font-size: 11px; }
         h2.section-title { text-align: center; margin-top: 45px; margin-bottom: 5px; }
         .section-actions { text-align: center; margin-bottom: 15px; }
         .btn-new { background: #28a745; padding: 8px 16px; }
@@ -26,11 +26,10 @@
         .shop-chip .chip-actions { display: flex; gap: 5px; }
         .shop-chip .chip-actions span { cursor: pointer; opacity: 0.7; font-size: 11px; }
         .shop-chip.active .chip-actions span { opacity: 0.9; }
-        .groups-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 10px; }
-        .group-card { background: #eef0fb; border-left: 4px solid #5b6fd6; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); width: 280px; text-align: left; }
-        .group-card strong { color: #33409e; }
-        .group-card .shop-tag { font-size: 11px; color: #0d9488; background: #e1f5f1; padding: 2px 8px; border-radius: 10px; }
-        .device-grouped { background: #eeeeee !important; }
+        .schedules-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 10px; }
+        .schedule-card { background: #eef0fb; border-left: 4px solid #5b6fd6; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); width: 280px; text-align: left; }
+        .schedule-card strong { color: #33409e; }
+        .device-scheduled { background: #eeeeee !important; }
         .device-chip { display: inline-flex; align-items: center; background: #f4f7f6; padding: 3px 8px; border-radius: 8px; font-size: 11px; margin: 2px; }
         .device-chip .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px; }
         .btn-edit { background: #6c757d; font-size: 11px; padding: 5px 10px; }
@@ -38,13 +37,13 @@
         .org-controls { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         select.mini-select { font-size: 11px; padding: 3px 4px; border-radius: 4px; border: 1px solid #ccc; }
         .empty-note { text-align: center; color: #aaa; font-size: 13px; margin: 10px 0; }
-        .group-form-panel { background: white; padding: 22px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 420px; margin: 20px auto; }
-        .group-form-panel label { font-size: 12px; font-weight: bold; display: block; margin-top: 12px; margin-bottom: 4px; }
-        .group-form-panel input[type=text], .group-form-panel select.full { width: 100%; padding: 7px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        .device-checklist { max-height: 180px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; padding: 8px; }
+        .schedule-form-panel { background: white; padding: 22px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 420px; margin: 20px auto; }
+        .schedule-form-panel label { font-size: 12px; font-weight: bold; display: block; margin-top: 12px; margin-bottom: 4px; }
+        .schedule-form-panel input[type=text], .schedule-form-panel select.full { width: 100%; padding: 7px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .device-checklist { max-height: 220px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; padding: 8px; }
         .device-checklist label { display: block; font-size: 13px; font-weight: normal; padding: 3px 0; margin: 0; }
-        .group-form-actions { margin-top: 16px; display: flex; gap: 8px; }
-        .group-form-actions button { padding: 8px 16px; }
+        .schedule-form-actions { margin-top: 16px; display: flex; gap: 8px; }
+        .schedule-form-actions button { padding: 8px 16px; }
     </style>
 </head>
 <body>
@@ -53,37 +52,35 @@
 
     <div class="shops-bar" id="shopsBar"></div>
 
-    <h2 class="section-title">Groups</h2>
-    <div class="section-actions"><button class="btn-new" onclick="openNewGroupForm()">+ New group</button></div>
-    <div id="groupFormPanel" class="group-form-panel" style="display:none;">
-        <h3 id="groupFormTitle" style="margin:0;">New group</h3>
-        <input type="hidden" id="groupFormId">
-        <label>Shop</label>
-        <select id="groupFormShop" class="full" onchange="renderGroupFormDeviceList()"></select>
-        <label>Group name</label>
-        <input type="text" id="groupFormName" placeholder="e.g. Storefront signs">
-        <label>Devices in this shop</label>
-        <div id="groupFormDeviceList" class="device-checklist"></div>
-        <div class="group-form-actions">
-            <button onclick="saveGroupForm()" style="background:#28a745;">Save</button>
-            <button onclick="closeGroupForm()" style="background:#6c757d;">Cancel</button>
+    <h2 class="section-title">Schedules</h2>
+    <div class="section-actions"><button class="btn-new" onclick="openNewScheduleForm()">+ New schedule</button></div>
+    <div id="scheduleFormPanel" class="schedule-form-panel" style="display:none;">
+        <h3 id="scheduleFormTitle" style="margin:0;">New schedule</h3>
+        <input type="hidden" id="scheduleFormId">
+        <label>Schedule name</label>
+        <input type="text" id="scheduleFormName" placeholder="e.g. Storefront signs">
+        <label>Devices (any shop)</label>
+        <div id="scheduleFormDeviceList" class="device-checklist"></div>
+        <div class="schedule-form-actions">
+            <button onclick="saveScheduleForm()" style="background:#28a745;">Save</button>
+            <button onclick="closeScheduleForm()" style="background:#6c757d;">Cancel</button>
         </div>
     </div>
-    <div class="groups-grid" id="groupsGrid"></div>
+    <div class="schedules-grid" id="schedulesGrid"></div>
 
     <h2 class="section-title">Devices</h2>
     <div class="dashboard-grid" id="dashboard">Loading live device grid...</div>
 
 <script>
     const BACKEND_URL = 'http://139.199.182.110:3000/api';
-    let schedulesData = {};
+    let timersData = {};
     let devicesData = [];
     let shopsData = [];
     let deviceShopsMap = {};
-    let groupsData = [];
+    let schedulesData = [];
     let currentShopFilter = 'all';
 
-    // Prevents user-supplied text (shop/group names) from being interpreted
+    // Prevents user-supplied text (shop/schedule names) from being interpreted
     // as HTML when injected into innerHTML (XSS guard).
     function escHtml(str) {
         return String(str)
@@ -101,13 +98,13 @@
             const devicesJson = await devicesRes.json();
             if (devicesJson.success) devicesData = devicesJson.devices;
 
-            // Fetch schedules
+            // Fetch timers
             try {
-                const schedulesRes = await fetch(`${BACKEND_URL}/schedules`);
-                const schedulesJson = await schedulesRes.json();
-                if (schedulesJson.success) schedulesData = schedulesJson.schedules;
-            } catch (scheduleError) {
-                console.error("Failed to load schedules:", scheduleError);
+                const timersRes = await fetch(`${BACKEND_URL}/timers`);
+                const timersJson = await timersRes.json();
+                if (timersJson.success) timersData = timersJson.timers;
+            } catch (timersError) {
+                console.error("Failed to load timers:", timersError);
             }
 
             // Fetch shops
@@ -122,48 +119,48 @@
                 console.error("Failed to load shops:", shopsError);
             }
 
-            // Fetch groups
+            // Fetch schedules
             try {
-                const groupsRes = await fetch(`${BACKEND_URL}/groups`);
-                const groupsJson = await groupsRes.json();
-                if (groupsJson.success) groupsData = groupsJson.groups;
-            } catch (groupsError) {
-                console.error("Failed to load groups:", groupsError);
+                const schedulesRes = await fetch(`${BACKEND_URL}/schedules`);
+                const schedulesJson = await schedulesRes.json();
+                if (schedulesJson.success) schedulesData = schedulesJson.schedules;
+            } catch (schedulesError) {
+                console.error("Failed to load schedules:", schedulesError);
             }
 
             renderShopsBar();
-            renderGroups();
+            renderSchedules();
             renderGrid();
-            reconcileGroupState();
+            reconcileScheduleState();
         } catch (e) {
             document.getElementById('dashboard').innerText = "Failed loading devices.";
         }
     }
 
-    // Corrects any group member whose reported power or brightness has
-    // drifted from the group's stored targets — e.g. it was offline during
-    // the last group change, just joined the group, or was adjusted outside
+    // Corrects any schedule member whose reported power or brightness has
+    // drifted from the schedule's stored targets — e.g. it was offline during
+    // the last change, just joined the schedule, or was adjusted outside
     // this dashboard. Runs opportunistically on every loadAll(), not on a
     // dedicated timer.
     const BRIGHTNESS_DRIFT_TOLERANCE = 10;
-    async function reconcileGroupState() {
+    async function reconcileScheduleState() {
         const corrections = [];
-        groupsData.forEach(group => {
+        schedulesData.forEach(scheduleEntry => {
             // --- Power: any mismatch gets corrected, no tolerance (binary) ---
-            if (group.targetPower != null) {
-                const driftedPowerIds = group.deviceIds.filter(deviceId => {
+            if (scheduleEntry.targetPower != null) {
+                const driftedPowerIds = scheduleEntry.deviceIds.filter(deviceId => {
                     const dev = devicesData.find(d => d.id === deviceId);
                     if (!dev || !dev.online || !dev.status) return false; // nothing to correct on an offline device
                     const switchObj = dev.status.find(s => s.code === 'switch_led');
                     const current = switchObj ? switchObj.value : null;
-                    return current !== group.targetPower;
+                    return current !== scheduleEntry.targetPower;
                 });
                 if (driftedPowerIds.length > 0) {
-                    corrections.push(fetch(`${BACKEND_URL}/light/group/power`, {
+                    corrections.push(fetch(`${BACKEND_URL}/light/schedule/power`, {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            groupId: group.groupId,
-                            status: group.targetPower,
+                            scheduleId: scheduleEntry.scheduleId,
+                            status: scheduleEntry.targetPower,
                             deviceIds: driftedPowerIds,
                             isCorrection: true
                         })
@@ -172,26 +169,26 @@
             }
 
             // --- Brightness: correct only past a tolerance, to avoid Smart's own reporting noise ---
-            if (group.targetBrightness != null) {
+            if (scheduleEntry.targetBrightness != null) {
                 const driftedDeviceIds = [];
                 const deviceCodes = [];
-                group.deviceIds.forEach(deviceId => {
+                scheduleEntry.deviceIds.forEach(deviceId => {
                     const dev = devicesData.find(d => d.id === deviceId);
                     if (!dev || !dev.online || !dev.status) return;
                     const brightObj = dev.status.find(s => s.code === 'bright_value_v2' || s.code === 'bright_value');
                     const current = brightObj ? brightObj.value : null;
                     const code = brightObj ? brightObj.code : 'bright_value';
-                    if (current == null || Math.abs(current - group.targetBrightness) > BRIGHTNESS_DRIFT_TOLERANCE) {
+                    if (current == null || Math.abs(current - scheduleEntry.targetBrightness) > BRIGHTNESS_DRIFT_TOLERANCE) {
                         driftedDeviceIds.push(deviceId);
                         deviceCodes.push({ deviceId, code });
                     }
                 });
                 if (driftedDeviceIds.length > 0) {
-                    corrections.push(fetch(`${BACKEND_URL}/light/group/brightness`, {
+                    corrections.push(fetch(`${BACKEND_URL}/light/schedule/brightness`, {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            groupId: group.groupId,
-                            value: group.targetBrightness,
+                            scheduleId: scheduleEntry.scheduleId,
+                            value: scheduleEntry.targetBrightness,
                             deviceIds: driftedDeviceIds,
                             deviceCodes,
                             isCorrection: true
@@ -205,7 +202,7 @@
         }
     }
 
-    // --- SHOPS ---
+    // --- SHOPS (unchanged: pure organization, used only to filter the Devices grid) ---
     function renderShopsBar() {
         const bar = document.getElementById('shopsBar');
         let html = `<div class="shop-chip ${currentShopFilter === 'all' ? 'active' : ''}"><span class="chip-label" onclick="setShopFilter('all')">All shops</span></div>`;
@@ -227,7 +224,7 @@
     function setShopFilter(shopId) {
         currentShopFilter = shopId;
         renderShopsBar();
-        renderGroups();
+        renderSchedules();
         renderGrid();
     }
 
@@ -254,7 +251,7 @@
     }
 
     async function deleteShop(shopId) {
-        if (!confirm('Delete this shop? Its devices will become unassigned and its groups will be deleted.')) return;
+        if (!confirm('Delete this shop? Its devices will become unassigned. Any schedules they belong to are unaffected.')) return;
         const res = await fetch(`${BACKEND_URL}/shops/delete`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ shopId })
@@ -275,87 +272,98 @@
         if (json.success) loadAll(); else alert('Failed to assign shop: ' + json.error);
     }
 
-    async function assignGroup(deviceId, groupId) {
-        const res = await fetch(`${BACKEND_URL}/devices/assign-group`, {
+    async function assignSchedule(deviceId, scheduleId) {
+        const res = await fetch(`${BACKEND_URL}/devices/assign-schedule`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ deviceId, groupId: groupId || null })
+            body: JSON.stringify({ deviceId, scheduleId: scheduleId || null })
         });
         const json = await res.json();
-        if (json.success) loadAll(); else alert('Failed to assign group: ' + json.error);
+        if (json.success) loadAll(); else alert('Failed to assign schedule: ' + json.error);
     }
 
-    function deviceGroupId(deviceId) {
-        const g = groupsData.find(gr => gr.deviceIds.includes(deviceId));
-        return g ? g.groupId : '';
+    function deviceScheduleId(deviceId) {
+        const s = schedulesData.find(sc => sc.deviceIds.includes(deviceId));
+        return s ? s.scheduleId : '';
     }
 
-    // --- GROUPS ---
-    function renderGroups() {
-        const container = document.getElementById('groupsGrid');
-        const visibleGroups = currentShopFilter === 'all'
-            ? groupsData
-            : groupsData.filter(g => g.shopId === currentShopFilter);
-        // 'unassigned' has no groups, since every group belongs to a real shop
+    // --- SCHEDULES (formerly Groups — now independent of shop) ---
+    function renderSchedules() {
+        const container = document.getElementById('schedulesGrid');
 
-        if (visibleGroups.length === 0) {
-            container.innerHTML = '<div class="empty-note">No groups yet.</div>';
+        if (schedulesData.length === 0) {
+            container.innerHTML = '<div class="empty-note">No schedules yet.</div>';
             return;
         }
 
-        container.innerHTML = visibleGroups.map(group => {
-            const shop = shopsData.find(s => s.shopId === group.shopId);
-            const memberChips = group.deviceIds.map(id => {
+        // A schedule can span multiple shops, so the shop filter doesn't
+        // restrict membership — it just decides which schedules are shown:
+        // any schedule with at least one device in the active shop qualifies.
+        // A schedule split across two shops will appear under both.
+        const visibleSchedules = schedulesData.filter(scheduleEntry => {
+            if (currentShopFilter === 'all') return true;
+            if (currentShopFilter === 'unassigned') {
+                return scheduleEntry.deviceIds.some(id => !deviceShopsMap[id]);
+            }
+            return scheduleEntry.deviceIds.some(id => deviceShopsMap[id] === currentShopFilter);
+        });
+
+        if (visibleSchedules.length === 0) {
+            container.innerHTML = '<div class="empty-note">No schedules include a device from this shop.</div>';
+            return;
+        }
+
+        container.innerHTML = visibleSchedules.map(scheduleEntry => {
+            const memberChips = scheduleEntry.deviceIds.map(id => {
                 const dev = devicesData.find(d => d.id === id);
                 if (!dev) return '';
-                return `<span class="device-chip"><span class="dot" style="background:${dev.online ? '#28a745' : '#dc3545'}"></span>${dev.name}</span>`;
+                const shop = shopsData.find(s => s.shopId === deviceShopsMap[id]);
+                const shopLabel = shop ? ` <span style="opacity:.55;">(${escHtml(shop.name)})</span>` : '';
+                return `<span class="device-chip"><span class="dot" style="background:${dev.online ? '#28a745' : '#dc3545'}"></span>${dev.name}${shopLabel}</span>`;
             }).join('');
 
-            // Find all schedules associated with this groupId
-            const groupSchedules = Object.entries(schedulesData).filter(([, s]) => s.groupId === group.groupId);
-            const scheduleCount = groupSchedules.length;
-            let scheduleItemsHtml = '';
-            groupSchedules.forEach(([jobKey, sched]) => {
-                const actionLabel = sched.targetStatus ? 'ON' : 'OFF';
-                const brightnessLabel = sched.targetStatus && sched.brightness != null
-                    ? ` &nbsp;🔆 <strong>${sched.brightness}</strong>` : '';
-                scheduleItemsHtml += `
+            // Find all timers associated with this scheduleId
+            const scheduleTimers = Object.entries(timersData).filter(([, t]) => t.scheduleId === scheduleEntry.scheduleId);
+            const timerCount = scheduleTimers.length;
+            let timerItemsHtml = '';
+            scheduleTimers.forEach(([jobKey, timer]) => {
+                const actionLabel = timer.targetStatus ? 'ON' : 'OFF';
+                const brightnessLabel = timer.targetStatus && timer.brightness != null
+                    ? ` &nbsp;🔆 <strong>${timer.brightness}</strong>` : '';
+                timerItemsHtml += `
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; background:#f9f9f9; padding:4px 8px; border-radius:4px; border:1px solid #eee;">
-                        <span>${actionLabel} at <strong>${sched.time}</strong>${brightnessLabel}</span>
-                        <button onclick="deleteSchedule('${jobKey}')" style="background:#dc3545; padding:2px 6px; font-size:10px; border-radius:3px; margin:0;">Delete</button>
+                        <span>${actionLabel} at <strong>${timer.time}</strong>${brightnessLabel}</span>
+                        <button onclick="deleteTimer('${jobKey}')" style="background:#dc3545; padding:2px 6px; font-size:10px; border-radius:3px; margin:0;">Delete</button>
                     </div>
                 `;
             });
-            if (!scheduleItemsHtml) {
-                scheduleItemsHtml = '<div style="font-size:11px; color:#aaa; margin-top:5px;">No active automation rules.</div>';
+            if (!timerItemsHtml) {
+                timerItemsHtml = '<div style="font-size:11px; color:#aaa; margin-top:5px;">No active automation rules.</div>';
             }
 
-            // The slider always shows the group's stored target — never
+            // The slider always shows the schedule's stored target — never
             // recomputed from live device status, so it doesn't reset itself.
-            // Only a brand-new group (no target set yet) falls back to a
+            // Only a brand-new schedule (no target set yet) falls back to a
             // member's current brightness, purely as a one-time starting point.
-            let sliderValue = group.targetBrightness;
+            let sliderValue = scheduleEntry.targetBrightness;
             if (sliderValue == null) {
-                const firstMember = devicesData.find(d => group.deviceIds.includes(d.id) && d.status);
+                const firstMember = devicesData.find(d => scheduleEntry.deviceIds.includes(d.id) && d.status);
                 const brightObj = firstMember ? firstMember.status.find(s => s.code === 'bright_value_v2' || s.code === 'bright_value') : null;
                 sliderValue = brightObj ? brightObj.value : 500;
             }
 
-            // Same pattern as brightness: the status shown is the group's
+            // Same pattern as brightness: the status shown is the schedule's
             // stored target, never recomputed live from member devices.
-            // Only a brand-new group (no target set yet) falls back to a
-            // member's current switch state, purely as a one-time starting point.
-            let powerValue = group.targetPower;
+            let powerValue = scheduleEntry.targetPower;
             if (powerValue == null) {
-                const firstMember = devicesData.find(d => group.deviceIds.includes(d.id) && d.status);
+                const firstMember = devicesData.find(d => scheduleEntry.deviceIds.includes(d.id) && d.status);
                 const switchObj = firstMember ? firstMember.status.find(s => s.code === 'switch_led') : null;
                 powerValue = switchObj ? switchObj.value : false;
             }
 
             return `
-                <div class="card group-card">
+                <div class="card schedule-card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong>${escHtml(group.name)}</strong>
-                        <span class="shop-tag">${shop ? escHtml(shop.name) : ''}</span>
+                        <strong>${escHtml(scheduleEntry.name)}</strong>
                     </div>
                     <div style="font-size:11px; color:#aaa; margin:6px 0;">
                         Status:
@@ -364,44 +372,44 @@
                     </div>
                     <div style="margin:12px 0;">${memberChips || '<span class="empty-note">No devices</span>'}</div>
                     <div>
-                        <button class="btn-on" onclick="groupPower('${group.groupId}', true)">ON</button>
-                        <button class="btn-off" onclick="groupPower('${group.groupId}', false)">OFF</button>
+                        <button class="btn-on" onclick="schedulePower('${scheduleEntry.scheduleId}', true)">ON</button>
+                        <button class="btn-off" onclick="schedulePower('${scheduleEntry.scheduleId}', false)">OFF</button>
                     </div>
                     <div style="margin-top:10px;">
-                        <label style="font-size:12px;" id="gdimmer_val_${group.groupId}">Dimmer (${sliderValue})</label>
-                        <input type="range" min="10" max="1000" value="${sliderValue}" id="gdimmer_${group.groupId}"
-                               oninput="document.getElementById('gdimmer_val_${group.groupId}').innerText = 'Dimmer (' + this.value + ')'"
-                               onchange="groupBrightness('${group.groupId}', this.value)" style="width:100%;">
+                        <label style="font-size:12px;" id="sdimmer_val_${scheduleEntry.scheduleId}">Dimmer (${sliderValue})</label>
+                        <input type="range" min="10" max="1000" value="${sliderValue}" id="sdimmer_${scheduleEntry.scheduleId}"
+                               oninput="document.getElementById('sdimmer_val_${scheduleEntry.scheduleId}').innerText = 'Dimmer (' + this.value + ')'"
+                               onchange="scheduleBrightness('${scheduleEntry.scheduleId}', this.value)" style="width:100%;">
                     </div>
                     <div style="margin-top:12px; display:flex; gap:6px;">
-                        <button class="btn-edit" onclick="editGroup('${group.groupId}')">Edit</button>
-                        <button class="btn-delete" onclick="deleteGroup('${group.groupId}')">Delete</button>
+                        <button class="btn-edit" onclick="editSchedule('${scheduleEntry.scheduleId}')">Edit</button>
+                        <button class="btn-delete" onclick="deleteSchedule('${scheduleEntry.scheduleId}')">Delete</button>
                     </div>
 
-                    <div class="schedule-box">
-                        <strong>Daily Schedule Automation</strong>
+                    <div class="timer-box">
+                        <strong>Daily Timer Automation</strong>
                         <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
-                            <input type="time" id="gtime_${group.groupId}">
-                            <select id="gact_${group.groupId}" onchange="toggleGroupBrightnessOption('${group.groupId}')">
+                            <input type="time" id="stime_${scheduleEntry.scheduleId}">
+                            <select id="sact_${scheduleEntry.scheduleId}" onchange="toggleScheduleBrightnessOption('${scheduleEntry.scheduleId}')">
                                 <option value="true">Turn ON</option>
                                 <option value="false">Turn OFF</option>
                             </select>
                         </div>
-                        <div id="gbright_opt_${group.groupId}" style="margin-top:6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <div id="sbright_opt_${scheduleEntry.scheduleId}" style="margin-top:6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                             <label style="font-size:11px; display:flex; align-items:center; gap:4px; cursor:pointer;">
-                                <input type="checkbox" id="gbright_chk_${group.groupId}" onchange="toggleGroupBrightnessSlider('${group.groupId}')"> Set Brightness
+                                <input type="checkbox" id="sbright_chk_${scheduleEntry.scheduleId}" onchange="toggleScheduleBrightnessSlider('${scheduleEntry.scheduleId}')"> Set Brightness
                             </label>
-                            <div id="gbright_slider_wrap_${group.groupId}" style="display:none; flex:1; align-items:center; gap:6px; min-width:120px;">
-                                <input type="range" min="10" max="1000" value="${sliderValue}" id="gsched_bright_${group.groupId}" style="flex:1;"
-                                       oninput="document.getElementById('gsched_bright_val_${group.groupId}').innerText = this.value">
-                                <span id="gsched_bright_val_${group.groupId}" style="font-size:11px; min-width:30px;">${sliderValue}</span>
+                            <div id="sbright_slider_wrap_${scheduleEntry.scheduleId}" style="display:none; flex:1; align-items:center; gap:6px; min-width:120px;">
+                                <input type="range" min="10" max="1000" value="${sliderValue}" id="ssched_bright_${scheduleEntry.scheduleId}" style="flex:1;"
+                                       oninput="document.getElementById('ssched_bright_val_${scheduleEntry.scheduleId}').innerText = this.value">
+                                <span id="ssched_bright_val_${scheduleEntry.scheduleId}" style="font-size:11px; min-width:30px;">${sliderValue}</span>
                             </div>
                         </div>
-                        <button onclick="setGroupSchedule('${group.groupId}')" style="margin-top:8px; background:#28a745; padding:5px 10px; font-size:11px;">Save Schedule</button>
+                        <button onclick="setScheduleTimer('${scheduleEntry.scheduleId}')" style="margin-top:8px; background:#28a745; padding:5px 10px; font-size:11px;">Save Timer</button>
                         <div style="margin-top:10px; border-top:1px dashed #eee; padding-top:8px;">
-                            <strong style="font-size:11px; color:#666;">Active Timers (${scheduleCount}/10):</strong>
-                            <div id="gsched_list_${group.groupId}">
-                                ${scheduleItemsHtml}
+                            <strong style="font-size:11px; color:#666;">Active Timers (${timerCount}/10):</strong>
+                            <div id="ssched_list_${scheduleEntry.scheduleId}">
+                                ${timerItemsHtml}
                             </div>
                         </div>
                     </div>
@@ -409,122 +417,106 @@
         }).join('');
     }
 
-    async function groupPower(groupId, status) {
-        await fetch(`${BACKEND_URL}/light/group/power`, {
+    async function schedulePower(scheduleId, status) {
+        await fetch(`${BACKEND_URL}/light/schedule/power`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ groupId, status })
+            body: JSON.stringify({ scheduleId, status })
         });
         setTimeout(loadAll, 1500);
     }
 
-    async function groupBrightness(groupId, value) {
-        const group = groupsData.find(g => g.groupId === groupId);
-        const deviceCodes = (group ? group.deviceIds : []).map(deviceId => {
+    async function scheduleBrightness(scheduleId, value) {
+        const scheduleEntry = schedulesData.find(s => s.scheduleId === scheduleId);
+        const deviceCodes = (scheduleEntry ? scheduleEntry.deviceIds : []).map(deviceId => {
             const dev = devicesData.find(d => d.id === deviceId);
             const brightObj = dev && dev.status ? dev.status.find(s => s.code === 'bright_value_v2' || s.code === 'bright_value') : null;
             return { deviceId, code: brightObj ? brightObj.code : 'bright_value' };
         });
-        await fetch(`${BACKEND_URL}/light/group/brightness`, {
+        await fetch(`${BACKEND_URL}/light/schedule/brightness`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ groupId, value, deviceCodes })
+            body: JSON.stringify({ scheduleId, value, deviceCodes })
         });
         setTimeout(loadAll, 1500);
     }
 
-    async function deleteGroup(groupId) {
-        if (!confirm('Delete this group?')) return;
-        const res = await fetch(`${BACKEND_URL}/groups/delete`, {
+    async function deleteSchedule(scheduleId) {
+        if (!confirm('Delete this schedule?')) return;
+        const res = await fetch(`${BACKEND_URL}/schedules/delete`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ groupId })
+            body: JSON.stringify({ scheduleId })
         });
         const json = await res.json();
-        if (json.success) loadAll(); else alert('Failed to delete group: ' + json.error);
+        if (json.success) loadAll(); else alert('Failed to delete schedule: ' + json.error);
     }
 
-    // --- GROUP FORM (create + edit share one panel) ---
-    function openNewGroupForm() {
-        document.getElementById('groupFormTitle').innerText = 'New group';
-        document.getElementById('groupFormId').value = '';
-        document.getElementById('groupFormName').value = '';
-        const shopSelect = document.getElementById('groupFormShop');
-        shopSelect.disabled = false;
-        shopSelect.innerHTML = shopsData.map(s => `<option value="${s.shopId}">${escHtml(s.name)}</option>`).join('');
-        if (shopsData.length === 0) {
-            alert('Create a shop first — groups need to belong to one.');
-            return;
-        }
-        if (currentShopFilter !== 'all' && currentShopFilter !== 'unassigned') {
-            shopSelect.value = currentShopFilter;
-        }
-        renderGroupFormDeviceList();
-        document.getElementById('groupFormPanel').style.display = 'block';
+    // --- SCHEDULE FORM (create + edit share one panel) ---
+    function openNewScheduleForm() {
+        document.getElementById('scheduleFormTitle').innerText = 'New schedule';
+        document.getElementById('scheduleFormId').value = '';
+        document.getElementById('scheduleFormName').value = '';
+        renderScheduleFormDeviceList();
+        document.getElementById('scheduleFormPanel').style.display = 'block';
     }
 
-    function editGroup(groupId) {
-        const group = groupsData.find(g => g.groupId === groupId);
-        if (!group) return;
-        document.getElementById('groupFormTitle').innerText = 'Edit group';
-        document.getElementById('groupFormId').value = group.groupId;
-        document.getElementById('groupFormName').value = group.name;
-        const shopSelect = document.getElementById('groupFormShop');
-        shopSelect.innerHTML = shopsData.map(s => `<option value="${s.shopId}">${escHtml(s.name)}</option>`).join('');
-        shopSelect.value = group.shopId;
-        shopSelect.disabled = true; // a group's shop is fixed after creation
-        renderGroupFormDeviceList(group.deviceIds);
-        document.getElementById('groupFormPanel').style.display = 'block';
+    function editSchedule(scheduleId) {
+        const scheduleEntry = schedulesData.find(s => s.scheduleId === scheduleId);
+        if (!scheduleEntry) return;
+        document.getElementById('scheduleFormTitle').innerText = 'Edit schedule';
+        document.getElementById('scheduleFormId').value = scheduleEntry.scheduleId;
+        document.getElementById('scheduleFormName').value = scheduleEntry.name;
+        renderScheduleFormDeviceList(scheduleEntry.deviceIds);
+        document.getElementById('scheduleFormPanel').style.display = 'block';
     }
 
-    function renderGroupFormDeviceList(preselected) {
-        const shopId = document.getElementById('groupFormShop').value;
-        const list = document.getElementById('groupFormDeviceList');
+    function renderScheduleFormDeviceList(preselected) {
+        const list = document.getElementById('scheduleFormDeviceList');
         const preselectedIds = preselected || [];
-        const editingGroupId = document.getElementById('groupFormId').value;
-        const shopDevices = devicesData.filter(d => (deviceShopsMap[d.id] || '') === shopId);
+        const editingScheduleId = document.getElementById('scheduleFormId').value;
 
-        if (shopDevices.length === 0) {
-            list.innerHTML = '<div class="empty-note">No devices in this shop yet.</div>';
+        if (devicesData.length === 0) {
+            list.innerHTML = '<div class="empty-note">No devices found yet.</div>';
             return;
         }
-        list.innerHTML = shopDevices.map(d => {
-            const currentGroup = deviceGroupId(d.id);
-            const belongsElsewhere = currentGroup && currentGroup !== editingGroupId;
+        list.innerHTML = devicesData.map(d => {
+            const currentScheduleId = deviceScheduleId(d.id);
+            const belongsElsewhere = currentScheduleId && currentScheduleId !== editingScheduleId;
+            const shop = shopsData.find(s => s.shopId === deviceShopsMap[d.id]);
+            const shopLabel = shop ? escHtml(shop.name) : 'Unassigned';
             return `<label>
                 <input type="checkbox" value="${d.id}" ${preselectedIds.includes(d.id) ? 'checked' : ''}>
-                ${d.name} ${belongsElsewhere ? '<span style="color:#aaa;">(currently in another group)</span>' : ''}
+                ${d.name} <span style="color:#0d9488;">(${shopLabel})</span> ${belongsElsewhere ? '<span style="color:#aaa;">(currently in another schedule)</span>' : ''}
             </label>`;
         }).join('');
     }
 
-    function closeGroupForm() {
-        document.getElementById('groupFormPanel').style.display = 'none';
-        document.getElementById('groupFormShop').disabled = false;
+    function closeScheduleForm() {
+        document.getElementById('scheduleFormPanel').style.display = 'none';
     }
 
-    async function saveGroupForm() {
-        const groupId = document.getElementById('groupFormId').value;
-        const shopId = document.getElementById('groupFormShop').value;
-        const name = document.getElementById('groupFormName').value;
-        if (!name || !name.trim()) return alert('Please enter a group name.');
-        const deviceIds = Array.from(document.querySelectorAll('#groupFormDeviceList input[type=checkbox]:checked')).map(cb => cb.value);
+    async function saveScheduleForm() {
+        const scheduleId = document.getElementById('scheduleFormId').value;
+        const name = document.getElementById('scheduleFormName').value;
+        if (!name || !name.trim()) return alert('Please enter a schedule name.');
+        const deviceIds = Array.from(document.querySelectorAll('#scheduleFormDeviceList input[type=checkbox]:checked')).map(cb => cb.value);
 
         let res;
-        if (groupId) {
-            res = await fetch(`${BACKEND_URL}/groups/update`, {
+        if (scheduleId) {
+            res = await fetch(`${BACKEND_URL}/schedules/update`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupId, name, deviceIds })
+                body: JSON.stringify({ scheduleId, name, deviceIds })
             });
         } else {
-            res = await fetch(`${BACKEND_URL}/groups`, {
+            res = await fetch(`${BACKEND_URL}/schedules`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ shopId, name, deviceIds })
+                body: JSON.stringify({ name, deviceIds })
             });
         }
         const json = await res.json();
         if (json.success) {
-            closeGroupForm();
+            closeScheduleForm();
             loadAll();
         } else {
-            alert('Failed to save group: ' + json.error);
+            alert('Failed to save schedule: ' + json.error);
         }
     }
 
@@ -549,48 +541,48 @@
 
             // Check for both variants safely
             const powerStatus = dev.status.find(s => s.code === 'switch_led')?.value ?? false;
-            
+
             const brightObj = dev.status.find(s => s.code === 'bright_value_v2' || s.code === 'bright_value');
             const currentBright = brightObj ? brightObj.value : 500;
             const brightCode = brightObj ? brightObj.code : 'bright_value';
-            
+
             const modeObj = dev.status.find(s => s.code === 'work_mode');
             const currentMode = modeObj ? modeObj.value : 'white';
 
             const statusClass = dev.online ? 'online' : 'offline';
 
-            // Find all schedules associated with this deviceId (empty for grouped
-            // devices, since joining a group overwrites any individual schedule)
-            const deviceSchedules = Object.entries(schedulesData).filter(([, s]) => s.deviceId === dev.id);
-            const scheduleCount = deviceSchedules.length;
-            let scheduleItemsHtml = '';
-            deviceSchedules.forEach(([jobKey, sched]) => {
-                const actionLabel = sched.targetStatus ? 'ON' : 'OFF';
-                const brightnessLabel = sched.targetStatus && sched.brightness != null
-                    ? ` &nbsp;🔆 <strong>${sched.brightness}</strong>` : '';
-                scheduleItemsHtml += `
+            // Find all timers associated with this deviceId (empty for scheduled
+            // devices, since joining a schedule overwrites any individual timer)
+            const deviceTimers = Object.entries(timersData).filter(([, t]) => t.deviceId === dev.id);
+            const timerCount = deviceTimers.length;
+            let timerItemsHtml = '';
+            deviceTimers.forEach(([jobKey, timer]) => {
+                const actionLabel = timer.targetStatus ? 'ON' : 'OFF';
+                const brightnessLabel = timer.targetStatus && timer.brightness != null
+                    ? ` &nbsp;🔆 <strong>${timer.brightness}</strong>` : '';
+                timerItemsHtml += `
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; background:#f9f9f9; padding:4px 8px; border-radius:4px; border:1px solid #eee;">
-                        <span>${actionLabel} at <strong>${sched.time}</strong>${brightnessLabel}</span>
-                        <button onclick="deleteSchedule('${jobKey}')" style="background:#dc3545; padding:2px 6px; font-size:10px; border-radius:3px; margin:0;">Delete</button>
+                        <span>${actionLabel} at <strong>${timer.time}</strong>${brightnessLabel}</span>
+                        <button onclick="deleteTimer('${jobKey}')" style="background:#dc3545; padding:2px 6px; font-size:10px; border-radius:3px; margin:0;">Delete</button>
                     </div>
                 `;
             });
 
-            if (!scheduleItemsHtml) {
-                scheduleItemsHtml = '<div style="font-size:11px; color:#aaa; margin-top:5px;">No active automation rules.</div>';
+            if (!timerItemsHtml) {
+                timerItemsHtml = '<div style="font-size:11px; color:#aaa; margin-top:5px;">No active automation rules.</div>';
             }
 
-            const memberGroupId = deviceGroupId(dev.id);
-            const memberGroup = memberGroupId ? groupsData.find(g => g.groupId === memberGroupId) : null;
-            const scheduleBoxHtml = memberGroup
-                ? `<div class="schedule-box">
-                       <strong>Daily Schedule Automation</strong>
+            const memberScheduleId = deviceScheduleId(dev.id);
+            const memberSchedule = memberScheduleId ? schedulesData.find(s => s.scheduleId === memberScheduleId) : null;
+            const timerBoxHtml = memberSchedule
+                ? `<div class="timer-box">
+                       <strong>Daily Timer Automation</strong>
                        <div style="font-size:12px; color:#888; margin-top:8px;">
-                           Managed by group <strong>${escHtml(memberGroup.name)}</strong>'s schedule. Remove this device from the group to set its own.
+                           Managed by schedule <strong>${escHtml(memberSchedule.name)}</strong>. Remove this device from the schedule to set its own timers.
                        </div>
                    </div>`
-                : `<div class="schedule-box">
-                       <strong>Daily Schedule Automation</strong>
+                : `<div class="timer-box">
+                       <strong>Daily Timer Automation</strong>
                        <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
                            <input type="time" id="time_${dev.id}">
                            <select id="act_${dev.id}" onchange="toggleBrightnessOption('${dev.id}')">
@@ -608,26 +600,23 @@
                                <span id="sched_bright_val_${dev.id}" style="font-size:11px; min-width:30px;">${currentBright}</span>
                            </div>
                        </div>
-                       <button onclick="setSchedule('${dev.id}', '${brightCode}')" style="margin-top:8px; background:#28a745; padding:5px 10px; font-size:11px;">Save Schedule</button>
+                       <button onclick="setTimer('${dev.id}', '${brightCode}')" style="margin-top:8px; background:#28a745; padding:5px 10px; font-size:11px;">Save Timer</button>
                        <div style="margin-top:10px; border-top:1px dashed #eee; padding-top:8px;">
-                           <strong style="font-size:11px; color:#666;">Active Timers (${scheduleCount}/10):</strong>
+                           <strong style="font-size:11px; color:#666;">Active Timers (${timerCount}/10):</strong>
                            <div id="sched_list_${dev.id}">
-                               ${scheduleItemsHtml}
+                               ${timerItemsHtml}
                            </div>
                        </div>
                    </div>`;
 
             const card = document.createElement('div');
-            card.className = 'card' + (memberGroupId ? ' device-grouped' : '');
+            card.className = 'card' + (memberScheduleId ? ' device-scheduled' : '');
 
             const devShopId = deviceShopsMap[dev.id] || '';
-            const availableGroups = groupsData.filter(g => g.shopId === devShopId);
-            const groupSelectHtml = devShopId
-                ? `<select class="mini-select" onchange="assignGroup('${dev.id}', this.value)">
-                       <option value="">No group</option>
-                       ${availableGroups.map(g => `<option value="${g.groupId}" ${deviceGroupId(dev.id) === g.groupId ? 'selected' : ''}>${g.name}</option>`).join('')}
-                   </select>`
-                : `<span style="font-size:11px; color:#aaa;">Assign a shop to group</span>`;
+            const scheduleSelectHtml = `<select class="mini-select" onchange="assignSchedule('${dev.id}', this.value)">
+                       <option value="">No schedule</option>
+                       ${schedulesData.map(s => `<option value="${s.scheduleId}" ${deviceScheduleId(dev.id) === s.scheduleId ? 'selected' : ''}>${s.name}</option>`).join('')}
+                   </select>`;
 
             card.innerHTML = `
                 <span class="status-dot ${statusClass}" title="${dev.online ? 'Online' : 'Offline'}"></span>
@@ -640,21 +629,21 @@
                         <option value="">Unassigned</option>
                         ${shopsData.map(s => `<option value="${s.shopId}" ${devShopId === s.shopId ? 'selected' : ''}>${s.name}</option>`).join('')}
                     </select>
-                    ${groupSelectHtml}
+                    ${scheduleSelectHtml}
                 </div>
-                
+
                 <div>
-                    <button class="btn-on" onclick="togglePower('${dev.id}', true)" ${memberGroupId ? 'disabled title="Managed by group"' : ''}>ON</button>
-                    <button class="btn-off" onclick="togglePower('${dev.id}', false)" ${memberGroupId ? 'disabled title="Managed by group"' : ''}>OFF</button>
+                    <button class="btn-on" onclick="togglePower('${dev.id}', true)" ${memberScheduleId ? 'disabled title="Managed by schedule"' : ''}>ON</button>
+                    <button class="btn-off" onclick="togglePower('${dev.id}', false)" ${memberScheduleId ? 'disabled title="Managed by schedule"' : ''}>OFF</button>
                 </div>
                 <div style="margin-top:10px;">
                     <label style="font-size:12px;" id="dimmer_val_${dev.id}">Dimmer (${currentBright})</label>
                     <input type="range" min="10" max="1000" value="${currentBright}" 
                            oninput="document.getElementById('dimmer_val_${dev.id}').innerText = 'Dimmer (' + this.value + ')'" 
-                           onchange="changeBrightness('${dev.id}', this.value, '${brightCode}')" style="width:100%;" ${memberGroupId ? 'disabled title="Managed by group"' : ''}>
+                           onchange="changeBrightness('${dev.id}', this.value, '${brightCode}')" style="width:100%;" ${memberScheduleId ? 'disabled title="Managed by schedule"' : ''}>
                 </div>
 
-                ${scheduleBoxHtml}
+                ${timerBoxHtml}
             `;
             container.appendChild(card);
         });
@@ -699,7 +688,7 @@
             } else {
                 dev.status.push({ code: code, value: parseInt(value) });
             }
-            
+
             // Optimistically update work_mode status array token to show standard mode instantly
             const modeObj = dev.status.find(s => s.code === 'work_mode');
             if (modeObj) {
@@ -742,15 +731,15 @@
         document.getElementById(`bright_slider_wrap_${deviceId}`).style.display = checked ? 'flex' : 'none';
     }
 
-    async function setSchedule(deviceId, brightCode) {
+    async function setTimer(deviceId, brightCode) {
         const time = document.getElementById(`time_${deviceId}`).value;
         const targetStatus = document.getElementById(`act_${deviceId}`).value === 'true';
         if (!time) return alert("Please specify a time target first!");
 
-        // Enforce 10-schedule cap per device
-        const deviceScheduleCount = Object.values(schedulesData).filter(s => s.deviceId === deviceId).length;
-        if (deviceScheduleCount >= 10) {
-            alert('Maximum of 10 schedules per device reached. Please delete one first.');
+        // Enforce 10-timer cap per device
+        const deviceTimerCount = Object.values(timersData).filter(t => t.deviceId === deviceId).length;
+        if (deviceTimerCount >= 10) {
+            alert('Maximum of 10 timers per device reached. Please delete one first.');
             return;
         }
 
@@ -765,7 +754,7 @@
         const payload = { deviceId, time, targetStatus };
         if (brightness != null) { payload.brightness = brightness; payload.brightCode = brightCode; }
 
-        const res = await fetch(`${BACKEND_URL}/light/schedule`, {
+        const res = await fetch(`${BACKEND_URL}/light/timer`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -774,50 +763,50 @@
         if (json.success) {
             loadAll();
         } else {
-            alert("Failed to save schedule: " + (json.error || "Unknown error"));
+            alert("Failed to save timer: " + (json.error || "Unknown error"));
         }
     }
 
-    function toggleGroupBrightnessOption(groupId) {
-        const action = document.getElementById(`gact_${groupId}`).value;
-        const brightOpt = document.getElementById(`gbright_opt_${groupId}`);
+    function toggleScheduleBrightnessOption(scheduleId) {
+        const action = document.getElementById(`sact_${scheduleId}`).value;
+        const brightOpt = document.getElementById(`sbright_opt_${scheduleId}`);
         if (action === 'true') {
             brightOpt.style.display = 'flex';
         } else {
             brightOpt.style.display = 'none';
-            document.getElementById(`gbright_chk_${groupId}`).checked = false;
-            document.getElementById(`gbright_slider_wrap_${groupId}`).style.display = 'none';
+            document.getElementById(`sbright_chk_${scheduleId}`).checked = false;
+            document.getElementById(`sbright_slider_wrap_${scheduleId}`).style.display = 'none';
         }
     }
 
-    function toggleGroupBrightnessSlider(groupId) {
-        const checked = document.getElementById(`gbright_chk_${groupId}`).checked;
-        document.getElementById(`gbright_slider_wrap_${groupId}`).style.display = checked ? 'flex' : 'none';
+    function toggleScheduleBrightnessSlider(scheduleId) {
+        const checked = document.getElementById(`sbright_chk_${scheduleId}`).checked;
+        document.getElementById(`sbright_slider_wrap_${scheduleId}`).style.display = checked ? 'flex' : 'none';
     }
 
-    async function setGroupSchedule(groupId) {
-        const time = document.getElementById(`gtime_${groupId}`).value;
-        const targetStatus = document.getElementById(`gact_${groupId}`).value === 'true';
+    async function setScheduleTimer(scheduleId) {
+        const time = document.getElementById(`stime_${scheduleId}`).value;
+        const targetStatus = document.getElementById(`sact_${scheduleId}`).value === 'true';
         if (!time) return alert("Please specify a time target first!");
 
-        // Enforce 10-schedule cap per group
-        const groupScheduleCount = Object.values(schedulesData).filter(s => s.groupId === groupId).length;
-        if (groupScheduleCount >= 10) {
-            alert('Maximum of 10 schedules per group reached. Please delete one first.');
+        // Enforce 10-timer cap per schedule
+        const scheduleTimerCount = Object.values(timersData).filter(t => t.scheduleId === scheduleId).length;
+        if (scheduleTimerCount >= 10) {
+            alert('Maximum of 10 timers per schedule reached. Please delete one first.');
             return;
         }
 
-        const group = groupsData.find(g => g.groupId === groupId);
+        const scheduleEntry = schedulesData.find(s => s.scheduleId === scheduleId);
         let brightness = null;
         let deviceCodes = null;
         if (targetStatus) {
-            const chk = document.getElementById(`gbright_chk_${groupId}`);
+            const chk = document.getElementById(`sbright_chk_${scheduleId}`);
             if (chk && chk.checked) {
-                brightness = parseInt(document.getElementById(`gsched_bright_${groupId}`).value);
+                brightness = parseInt(document.getElementById(`ssched_bright_${scheduleId}`).value);
                 // Resolve each member device's brightness DP code now, from
                 // its currently loaded status — same approach used for live
-                // group dimming, since the code rarely changes at runtime.
-                deviceCodes = (group ? group.deviceIds : []).map(deviceId => {
+                // schedule dimming, since the code rarely changes at runtime.
+                deviceCodes = (scheduleEntry ? scheduleEntry.deviceIds : []).map(deviceId => {
                     const dev = devicesData.find(d => d.id === deviceId);
                     const brightObj = dev && dev.status ? dev.status.find(s => s.code === 'bright_value_v2' || s.code === 'bright_value') : null;
                     return { deviceId, code: brightObj ? brightObj.code : 'bright_value' };
@@ -825,10 +814,10 @@
             }
         }
 
-        const payload = { groupId, time, targetStatus };
+        const payload = { scheduleId, time, targetStatus };
         if (brightness != null) { payload.brightness = brightness; payload.deviceCodes = deviceCodes; }
 
-        const res = await fetch(`${BACKEND_URL}/light/group/schedule`, {
+        const res = await fetch(`${BACKEND_URL}/light/schedule/timer`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -837,13 +826,13 @@
         if (json.success) {
             loadAll();
         } else {
-            alert("Failed to save schedule: " + (json.error || "Unknown error"));
+            alert("Failed to save timer: " + (json.error || "Unknown error"));
         }
     }
 
-    async function deleteSchedule(jobKey) {
-        if (!confirm("Are you sure you want to delete this schedule?")) return;
-        const res = await fetch(`${BACKEND_URL}/light/schedule/delete`, {
+    async function deleteTimer(jobKey) {
+        if (!confirm("Are you sure you want to delete this timer?")) return;
+        const res = await fetch(`${BACKEND_URL}/light/timer/delete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ jobKey })
@@ -852,7 +841,7 @@
         if (json.success) {
             loadAll();
         } else {
-            alert("Failed to delete schedule: " + json.error);
+            alert("Failed to delete timer: " + json.error);
         }
     }
 
