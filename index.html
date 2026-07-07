@@ -212,7 +212,7 @@
                 <div class="shop-chip ${currentShopFilter === shop.shopId ? 'active' : ''}">
                     <span class="chip-label" onclick="setShopFilter('${shop.shopId}')">${escHtml(shop.name)}</span>
                     <span class="chip-actions">
-                        <span onclick="renameShop('${shop.shopId}', ${JSON.stringify(shop.name)})" title="Rename">&#9998;</span>
+                        <span onclick="renameShop('${shop.shopId}')" title="Rename">&#9998;</span>
                         <span onclick="deleteShop('${shop.shopId}')" title="Delete">&#10005;</span>
                     </span>
                 </div>`;
@@ -239,8 +239,9 @@
         if (json.success) loadAll(); else alert('Failed to create shop: ' + json.error);
     }
 
-    async function renameShop(shopId, currentName) {
-        const name = prompt('Rename shop:', currentName);
+    async function renameShop(shopId) {
+        const shop = shopsData.find(s => s.shopId === shopId);
+        const name = prompt('Rename shop:', shop ? shop.name : '');
         if (!name || !name.trim()) return;
         const res = await fetch(`${BACKEND_URL}/shops/rename`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
