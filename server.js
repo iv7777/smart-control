@@ -495,6 +495,30 @@ const server = http.createServer((req, res) => {
     });
   }
 
+  // FEATURE 9: Rename a device directly on Tuya's platform — the display
+  // name is authoritative on Tuya's side, so this call affects the device
+  // everywhere it's managed (including the Tuya Smart Life app), not just
+  // in this dashboard. deviceId (and therefore schedule/timer/shop
+  // assignments keyed on it) is untouched by a rename.
+  else if (req.url === '/api/devices/rename' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const { deviceId, name } = JSON.parse(body);
+        if (!deviceId) throw new Error('deviceId is required');
+        if (!name || !name.trim()) throw new Error('Device name is required');
+        const result = await tuyaApiRequest(`/v1.0/iot-03/devices/${deviceId}`, 'PUT', { name: name.trim() });
+        if (!result.success) throw new Error(result.msg || 'Tuya rejected the rename');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+  }
+
   else if (req.url === '/api/devices/assign-schedule' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => body += chunk);

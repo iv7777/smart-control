@@ -44,6 +44,10 @@
         .device-checklist label { display: block; font-size: 13px; font-weight: normal; padding: 3px 0; margin: 0; }
         .schedule-form-actions { margin-top: 16px; display: flex; gap: 8px; }
         .schedule-form-actions button { padding: 8px 16px; }
+        .device-title-row { display: flex; align-items: center; gap: 6px; margin: 0 0 5px 0; }
+        .device-title-row h3 { margin: 0; }
+        .btn-rename-icon { cursor: pointer; opacity: 0.5; font-size: 12px; user-select: none; }
+        .btn-rename-icon:hover { opacity: 1; }
     </style>
 </head>
 <body>
@@ -280,6 +284,21 @@
         });
         const json = await res.json();
         if (json.success) loadAll(); else alert('Failed to assign schedule: ' + json.error);
+    }
+
+    // Renames a device directly on Smart's platform (affects the Smart app
+    // too — the display name shown here is always whatever Smart reports on
+    // the next device fetch, so no local override state is kept).
+    async function renameDevice(deviceId) {
+        const dev = devicesData.find(d => d.id === deviceId);
+        const name = prompt('Rename device:', dev ? dev.name : '');
+        if (!name || !name.trim()) return;
+        const res = await fetch(`${BACKEND_URL}/devices/rename`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId, name })
+        });
+        const json = await res.json();
+        if (json.success) loadAll(); else alert('Failed to rename device: ' + json.error);
     }
 
     function deviceScheduleId(deviceId) {
@@ -621,7 +640,10 @@
 
             card.innerHTML = `
                 <span class="status-dot ${statusClass}" title="${dev.online ? 'Online' : 'Offline'}"></span>
-                <h3 style="margin:0 0 5px 0;">${dev.name}</h3>
+                <div class="device-title-row">
+                    <h3>${dev.name}</h3>
+                    <span class="btn-rename-icon" onclick="renameDevice('${dev.id}')" title="Rename device">&#9998;</span>
+                </div>
                 <div style="font-size:11px; color:#aaa; margin-bottom:15px;">
                     ${dev.online ? 'Device Ready' : 'Device Unreachable'} | <span style="font-weight:bold;">${powerStatus ? 'ON' : 'OFF'}</span> | Mode: <span style="font-weight:bold; color:#007bff;">${currentMode.toUpperCase()}</span>
                 </div>
