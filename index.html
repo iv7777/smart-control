@@ -384,6 +384,7 @@
                 <div class="card schedule-card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <strong>${escHtml(scheduleEntry.name)}</strong>
+                        <span class="btn-rename-icon" onclick="renameSchedule('${scheduleEntry.scheduleId}')" title="Rename schedule">&#9998;</span>
                     </div>
                     <div style="font-size:11px; color:#aaa; margin:6px 0;">
                         Status:
@@ -457,6 +458,21 @@
             body: JSON.stringify({ scheduleId, value, deviceCodes })
         });
         setTimeout(loadAll, 1500);
+    }
+
+    // Renames a schedule in place. Only the name field is sent — deviceIds
+    // is omitted from the payload entirely, so /api/schedules/update leaves
+    // membership, sticky targetPower/targetBrightness, and timers untouched.
+    async function renameSchedule(scheduleId) {
+        const scheduleEntry = schedulesData.find(s => s.scheduleId === scheduleId);
+        const name = prompt('Rename schedule:', scheduleEntry ? scheduleEntry.name : '');
+        if (!name || !name.trim()) return;
+        const res = await fetch(`${BACKEND_URL}/schedules/update`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scheduleId, name })
+        });
+        const json = await res.json();
+        if (json.success) loadAll(); else alert('Failed to rename schedule: ' + json.error);
     }
 
     async function deleteSchedule(scheduleId) {
