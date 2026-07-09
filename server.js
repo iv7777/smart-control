@@ -710,6 +710,24 @@ const server = http.createServer((req, res) => {
         const orgData = loadOrgData();
         const scheduleEntry = orgData.schedules.find(s => s.scheduleId === scheduleId);
         if (!scheduleEntry) throw new Error('Schedule not found');
+
+        // If the schedule's sticky target power is OFF, brightness is
+        // meaningless right now — sending any command would risk waking the
+        // devices (many LED controllers auto-power-on when they receive a
+        // work_mode/brightness DP, even in the same batch as switch_led:
+        // false). Just record the new target and let the existing
+        // drift-correction cycle apply it silently the next time the
+        // schedule is turned back on.
+        if (scheduleEntry.targetPower === false) {
+          if (!isCorrection) {
+            scheduleEntry.targetBrightness = parseInt(value);
+            saveOrgData(orgData);
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, skipped: true, reason: 'Schedule is off — target saved, no devices touched' }));
+          return;
+        }
+
         // deviceCodes: [{deviceId, code}] — the frontend already knows each
         // device's correct brightness DP code (bright_value vs bright_value_v2)
         // from the status it already loaded, so the server doesn't re-fetch it.

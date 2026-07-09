@@ -173,7 +173,10 @@
             }
 
             // --- Brightness: correct only past a tolerance, to avoid Smart's own reporting noise ---
-            if (scheduleEntry.targetBrightness != null) {
+            // Skipped entirely while the schedule's target power is OFF —
+            // there's nothing to correct on devices that are meant to stay
+            // off, and sending a brightness command risks waking them.
+            if (scheduleEntry.targetBrightness != null && scheduleEntry.targetPower !== false) {
                 const driftedDeviceIds = [];
                 const deviceCodes = [];
                 scheduleEntry.deviceIds.forEach(deviceId => {
